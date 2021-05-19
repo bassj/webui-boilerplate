@@ -1,0 +1,39 @@
+.ui-autocomplete-menu {
+    border: 1px solid black;
+    border-top: none;
+    overflow: hidden;
+
+    margin: 0;
+    padding: 0;
+
+    flex-direction: column;
+}
+
+.ui-autocomplete-menu .ui-menu-item {
+    border: none;
+    outline: none;
+
+    background-color: white;
+    color: black;
+
+    cursor: pointer;
+    user-select: none;
+
+    text-align: left;
+
+    list-style: none;
+
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.ui-autocomplete-menu .ui-menu-item:focus,
+.ui-autocomplete-menu .ui-menu-item.focus {
+    background-color: gray;
+}
+
+ui-autocomplete input {
+    border: 1px solid black;
+    padding: 0.5rem;
+}
