@@ -4,10 +4,14 @@ class UIAutocomplete extends HTMLElement {
     constructor() {
         super();
 
-        this.source = [];
+        this._source = [];
         this.suggestions = [];
         this._selectedSuggestion = -1;
         this._typedValue = "";
+        this._sourceFunction = function (input, source) {
+            return source.filter(source => source.value.toLowerCase().includes(input) && input.length > 0);
+        };
+
         this.inputElement = null;
         this.sourceElement = null;
         this.overlayElement = document.createElement('ul');
@@ -15,11 +19,23 @@ class UIAutocomplete extends HTMLElement {
         this.overlayElement.style.position = "absolute";
         this.overlayElement.classList.add("ui-autocomplete-menu");
         this.overlayElement.setAttribute("tabindex", "-1");
-        this.overlayElement.setAttribute("id", this.getAttribute("id")+"-suggestions");
         this.overlayElement.setAttribute("role", "listbox");
         this.overlayElement.setAttribute("aria-expanded", "false");
 
+
         document.addEventListener('DOMContentLoaded', () => {
+            this.overlayElement.setAttribute("id", this.id+"-suggestions");
+
+            if (this.dataset.overlayClass) {
+                for (const cls of this.dataset.overlayClass.split(/[ ,]+/)) {
+                    this.overlayElement.classList.add(cls);
+                }
+            } else {
+                for (const cls of this.classList) {
+                    this.overlayElement.classList.add(cls);
+                }
+            }
+
             this.inputElement = this.querySelector("input");
             this.inputElement.setAttribute("aria-autocomplete", "list");
             this.inputElement.setAttribute("aria-owns", this.overlayElement.id);
@@ -52,7 +68,7 @@ class UIAutocomplete extends HTMLElement {
                         overlay.classList.add("focus");
                     });
 
-                    this.source.push(source);
+                    this._source.push(source);
                     this.overlayElement.appendChild(overlay);
                     cntr++;
                 }
@@ -104,6 +120,10 @@ class UIAutocomplete extends HTMLElement {
         });
     }
 
+    set source(value) {
+        
+    }
+
     connectedCallback() {
         document.body.appendChild(this.overlayElement);
     }
@@ -119,11 +139,9 @@ class UIAutocomplete extends HTMLElement {
         
         const rect = this.inputElement.getBoundingClientRect();
 
-        this.overlayElement.style.width = (rect.right - rect.left - 2) + "px";
-        this.overlayElement.style.left = rect.left;
-        this.overlayElement.style.top = rect.bottom;
-
-        //this.updateSuggestions();
+        this.overlayElement.style.width = (rect.right - rect.left) + "px";
+        this.overlayElement.style.left = rect.left + "px";
+        this.overlayElement.style.top = rect.bottom + "px";
     }
 
     hideSuggestions() {
@@ -136,9 +154,10 @@ class UIAutocomplete extends HTMLElement {
     updateSuggestions() {
         const value = this._typedValue.toLowerCase();
 
-        this.suggestions = [];
-        for (const item of this.source) {
-            if (item.value.toLowerCase().includes(value) && value.length > 0) {
+        this.suggestions = this._sourceFunction(value, this._source);
+
+        for (const item of this._source) {
+            if (this.suggestions.includes(item)) {
                 item.overlayElement.style.display = "block";
                 this.suggestions.push(item);
             } else {

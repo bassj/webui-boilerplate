@@ -95,7 +95,7 @@
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.i, ".ui-autocomplete-menu {\n    border: 1px solid black;\n    border-top: none;\n    overflow: hidden;\n\n    margin: 0;\n    padding: 0;\n\n    flex-direction: column;\n}\n\n.ui-autocomplete-menu .ui-menu-item {\n    border: none;\n    outline: none;\n\n    background-color: white;\n    color: black;\n\n    cursor: pointer;\n    user-select: none;\n\n    text-align: left;\n\n    list-style: none;\n\n    padding-top: 0.5rem;\n    padding-bottom: 0.5rem;\n    padding-left: 0.5rem;\n}\n\n.ui-autocomplete-menu .ui-menu-item:focus,\n.ui-autocomplete-menu .ui-menu-item.focus {\n    background-color: gray;\n}\n\nui-autocomplete input {\n    border: 1px solid black;\n    padding: 0.5rem;\n}", ""]);
+___CSS_LOADER_EXPORT___.push([module.i, ".ui-autocomplete-menu {\n    border: 1px solid black;\n    border-top: none;\n    overflow: hidden;\n\n    overflow-y: auto;\n\n    margin: 0;\n    padding: 0;\n\n    flex-direction: column;\n\n    max-height: 300px;\n\n    z-index: 9999;\n}\n\n.ui-autocomplete-menu .ui-menu-item {\n    border: none;\n    outline: none;\n\n    background-color: white;\n    color: black;\n\n    cursor: pointer;\n    user-select: none;\n\n    text-align: left;\n\n    list-style: none;\n\n    padding-top: 0.5rem;\n    padding-bottom: 0.5rem;\n    padding-left: 0.5rem;\n}\n\n.ui-autocomplete-menu .ui-menu-item:focus,\n.ui-autocomplete-menu .ui-menu-item.focus {\n    background-color: gray;\n}\n\nui-autocomplete input {\n    border: 1px solid black;\n    padding: 0.5rem;\n}\n\nui-autocomplete.form-control {\n    display: unset;\n    padding: unset;\n    border:unset;\n}\n\nui-autocomplete.form-control input {\n    display: block;\n    width: 100%;\n    padding: .375rem .75rem;\n    font-size: 1rem;\n    font-weight: 400;\n    line-height: 1.5;\n    color: #212529;\n    background-color: #fff;\n    background-clip: padding-box;\n    border: 1px solid #ced4da;\n    -webkit-appearance: none;\n    -moz-appearance: none;\n    appearance: none;\n    border-radius: .25rem;\n    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;\n}\n\n.form-control.ui-autocomplete-menu {\n    font-size: 1rem;\n    font-weight: 400;\n    line-height: 1.5;\n    color: #212529;\n    background-color: #fff;\n    background-clip: padding-box;\n    border: 1px solid #ced4da;\n    -webkit-appearance: none;\n    -moz-appearance: none;\n    appearance: none;\n    border-radius: .25rem;\n    border-top-left-radius: 0;\n    border-top-right-radius: 0;\n    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;\n}\n\n.form-control.ui-autocomplete-menu .ui-menu-item.focus {\n    background-color: #f1f3f5;\n}\n\n.input-group ui-autocomplete.form-control input {\n    border-top-left-radius: 0;\n    border-bottom-left-radius: 0;\n}", ""]);
 // Exports
 /* harmony default export */ __webpack_exports__["a"] = (___CSS_LOADER_EXPORT___);
 
@@ -482,10 +482,14 @@ class UIAutocomplete extends HTMLElement {
     constructor() {
         super();
 
-        this.source = [];
+        this._source = [];
         this.suggestions = [];
         this._selectedSuggestion = -1;
         this._typedValue = "";
+        this._sourceFunction = function (input, source) {
+            return source.filter(source => source.value.toLowerCase().includes(input) && input.length > 0);
+        };
+
         this.inputElement = null;
         this.sourceElement = null;
         this.overlayElement = document.createElement('ul');
@@ -493,11 +497,23 @@ class UIAutocomplete extends HTMLElement {
         this.overlayElement.style.position = "absolute";
         this.overlayElement.classList.add("ui-autocomplete-menu");
         this.overlayElement.setAttribute("tabindex", "-1");
-        this.overlayElement.setAttribute("id", this.getAttribute("id")+"-suggestions");
         this.overlayElement.setAttribute("role", "listbox");
         this.overlayElement.setAttribute("aria-expanded", "false");
 
+
         document.addEventListener('DOMContentLoaded', () => {
+            this.overlayElement.setAttribute("id", this.id+"-suggestions");
+
+            if (this.dataset.overlayClass) {
+                for (const cls of this.dataset.overlayClass.split(/[ ,]+/)) {
+                    this.overlayElement.classList.add(cls);
+                }
+            } else {
+                for (const cls of this.classList) {
+                    this.overlayElement.classList.add(cls);
+                }
+            }
+
             this.inputElement = this.querySelector("input");
             this.inputElement.setAttribute("aria-autocomplete", "list");
             this.inputElement.setAttribute("aria-owns", this.overlayElement.id);
@@ -530,7 +546,7 @@ class UIAutocomplete extends HTMLElement {
                         overlay.classList.add("focus");
                     });
 
-                    this.source.push(source);
+                    this._source.push(source);
                     this.overlayElement.appendChild(overlay);
                     cntr++;
                 }
@@ -582,6 +598,10 @@ class UIAutocomplete extends HTMLElement {
         });
     }
 
+    set source(value) {
+        
+    }
+
     connectedCallback() {
         document.body.appendChild(this.overlayElement);
     }
@@ -597,11 +617,9 @@ class UIAutocomplete extends HTMLElement {
         
         const rect = this.inputElement.getBoundingClientRect();
 
-        this.overlayElement.style.width = (rect.right - rect.left - 2) + "px";
-        this.overlayElement.style.left = rect.left;
-        this.overlayElement.style.top = rect.bottom;
-
-        //this.updateSuggestions();
+        this.overlayElement.style.width = (rect.right - rect.left) + "px";
+        this.overlayElement.style.left = rect.left + "px";
+        this.overlayElement.style.top = rect.bottom + "px";
     }
 
     hideSuggestions() {
@@ -614,9 +632,10 @@ class UIAutocomplete extends HTMLElement {
     updateSuggestions() {
         const value = this._typedValue.toLowerCase();
 
-        this.suggestions = [];
-        for (const item of this.source) {
-            if (item.value.toLowerCase().includes(value) && value.length > 0) {
+        this.suggestions = this._sourceFunction(value, this._source);
+
+        for (const item of this._source) {
+            if (this.suggestions.includes(item)) {
                 item.overlayElement.style.display = "block";
                 this.suggestions.push(item);
             } else {
