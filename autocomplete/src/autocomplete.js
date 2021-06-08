@@ -22,7 +22,6 @@ class UIAutocomplete extends HTMLElement {
         this.overlayElement.setAttribute("role", "listbox");
         this.overlayElement.setAttribute("aria-expanded", "false");
 
-
         document.addEventListener('DOMContentLoaded', () => {
             this.overlayElement.setAttribute("id", this.id+"-suggestions");
 
@@ -121,7 +120,13 @@ class UIAutocomplete extends HTMLElement {
     }
 
     set source(value) {
-        
+        if (typeof value == "function") {
+            this._sourceFunction = value;
+        } else if (typeof value[Symbol.iterator] === "function") {
+            this._source = Array.from(value);
+        } else {
+            throw new TypeError("Cannot set value to anything other than an iterator or function.");
+        }
     }
 
     connectedCallback() {
