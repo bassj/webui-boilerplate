@@ -1,4 +1,3 @@
-import "./autocomplete.css";
 
 class UIAutocomplete extends HTMLElement {
     constructor() {
@@ -214,3 +213,28 @@ class UIAutocomplete extends HTMLElement {
 }
 
 window.customElements.define('ui-autocomplete', UIAutocomplete);
+
+
+createDatalist() {
+        if (this.hasAttribute("list")) {
+            const list = docuemnt.querySelector(this.getAttribute("list"));
+
+            if (list) {
+                this.datalist = list;
+                return;
+            }
+        }
+
+        const q = this.querySelector("datalist");
+        if (q == null) {
+            this.datalist = document.createElement('datalist');
+        } else {
+            this.datalist = q;
+        }
+
+        this.datalist.setAttribute("id", `${this.id}-datalist`);
+
+        [].slice.call(this.datalist.options).forEach((option) => {
+            this.suggestions[option.value] = option;
+        });
+    }
