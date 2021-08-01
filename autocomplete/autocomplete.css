@@ -43,7 +43,7 @@ ul.ui-autocomplete-inner {
     padding-left: 0.5rem;
 }
 
-.ui-autocomplete-menu .ui-menu-item.focus {
+.ui-autocomplete-menu .ui-menu-item[aria-selected="true"] {
     background-color: #f1f3f5;
 }
 

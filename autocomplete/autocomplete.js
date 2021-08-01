@@ -68,15 +68,32 @@ class UIAutocomplete extends HTMLElement {
         this.overlay.addEventListener("mouseover", (e) => {
             if (e.target.nodeName.toLowerCase() != "option") return;
 
-            let index = 0;
-            let opt = e.target;
-            while (opt) {
-                if (opt.nodeName.toLowerCase() == "option") {
-                    index++;
-                }
-                opt = opt.previousSibling;
+            const index = this._suggestions.indexOf(e.target);
+            
+            /*if (this._selectedIndex > -1) {
+               this._suggestions[this._selectedIndex].setAttribute("aria-selected", "false");
             }
+
             this._selectedIndex = index;
+            e.target.setAttribute("aria-selected", "true");*/
+            this.select(index);
+        });
+
+        this.overlay.addEventListener("mouseout", (e) => {
+            if (e.target.nodeName.toLowerCase() != "option") return;
+
+            const index = this._suggestions.indexOf(e.target);
+
+            if (index != this._selectedIndex) return;
+
+            /*if (this._selectedIndex > -1) {
+                this._suggestions[this._selectedIndex].setAttribute("aria-selected", "false");
+            }
+
+            this._selectedIndex = -1;
+            e.target.setAttribute("aria-selected", "false");*/
+
+            this.deselect();
         });
     }
 
@@ -85,10 +102,11 @@ class UIAutocomplete extends HTMLElement {
         this.input.setAttribute("type", "autocomplete"); 
         if (this.hasAttribute("placeholder")) 
             this.input.setAttribute("placeholder", this.getAttribute("placeholder"));
-        this.input.setAttribute("aria-autocomplete", "list");
+        this.input.setAttribute("aria-autocomplete", "both");
         this.input.setAttribute("aria-owns", this.overlay.id);
         this.input.setAttribute("role", "combobox");
         this.input.setAttribute("autocomplete", "off");
+        this.input.setAttribute("aria-activedescendant", "");
 
         this.input.addEventListener("blur", () => {
             this.close();
@@ -118,41 +136,45 @@ class UIAutocomplete extends HTMLElement {
             }
         });
 
-        this.input.addEventListener("keydown", (e) => { //TODO: remove usage of scrollIntoView as it is experimental
+        this.input.addEventListener("keydown", (e) => { 
             if (e.key == "ArrowDown") {
                 if (this._selectedIndex + 1 < this._suggestions.length) {
-                   if (this._selectedIndex > -1) { 
-                    this._suggestions[this._selectedIndex].classList.remove('focus');
+                   /*if (this._selectedIndex > -1) { 
+                    this._suggestions[this._selectedIndex].setAttribute("aria-selected", "false");
                    }   
                    this._selectedIndex++;
                    this.input.value = this._suggestions[this._selectedIndex].value;
-                   this._suggestions[this._selectedIndex].classList.add('focus');
+                   this._suggestions[this._selectedIndex].setAttribute("aria-selected", "true");
                    this._suggestions[this._selectedIndex].scrollIntoView({
                        behavior: 'smooth',
                        block: 'nearest'
-                   });
+                   });*/
+                   this.select(this._selectedIndex + 1);
                 }
                 e.preventDefault();
             } else if (e.key == "ArrowUp") {
-                if (this._selectedIndex - 1 == -1) {
-                    this._suggestions[this._selectedIndex].classList.remove('focus');
-                    this.input.value = this._typedValue;
-                    this._selectedIndex = -1;
-                } else if (this._selectedIndex -1 > -1) {
-                    this._suggestions[this._selectedIndex].classList.remove('focus');
-                    this._selectedIndex--;
-                    this.input.value = this._suggestions[this._selectedIndex].value;
-                    this._suggestions[this._selectedIndex].classList.add('focus');
-                    this._suggestions[this._selectedIndex].scrollIntoView({
+                if (this._selectedIndex == 0) {
+                    //this._suggestions[this._selectedIndex].setAttribute("aria-selected", "false");
+                    //this.input.value = this._typedValue;
+                    //this._selectedIndex = -1;
+                    this.deselect();
+                } else if (this._selectedIndex > 0) {
+                    //this._suggestions[this._selectedIndex].setAttribute("aria-selected", "false");
+                    //this._selectedIndex--;
+                    //this.input.value = this._suggestions[this._selectedIndex].value;
+                    //this._suggestions[this._selectedIndex].setAttribute("aria-selected", "true");
+                    /*this._suggestions[this._selectedIndex].scrollIntoView({
                         behavior: 'smooth',
                         block: 'nearest'
-                    });
+                    });*/
+                    this.select(this._selectedIndex - 1);
                     e.preventDefault();
                 } 
             } else if (e.key == "Enter") {
                 if (this._selectedIndex > -1) {
                     e.preventDefault();
-                    this._selectedIndex = -1;
+                    this.deselect();
+                    //this._selectedIndex = -1;
                     this.close();
                 } 
             }
@@ -200,14 +222,17 @@ class UIAutocomplete extends HTMLElement {
 
         suggestions.forEach((suggestion, index) => {
             const suggElement = this.createSuggestion(suggestion);
-
-            if (prevSelectedValue == suggestion) {
-                suggElement.classList.add('focus');
-                this._selectedIndex = index;
-            }
-
             suggestionFragment.appendChild(suggElement);
             this._suggestions.push(suggElement);
+
+
+            if (prevSelectedValue == suggestion) {
+                //suggElement.setAttribute("aria-selected", "true");
+                //suggElement.id = `${this.id}-activeelement`;
+                //this._selectedIndex = index;
+                //this.setAttribute("aria-activedescendant", suggElement.id);
+                this.select(index);
+            }
         });
         
         while (this.overlayInner.firstChild) {
@@ -215,6 +240,14 @@ class UIAutocomplete extends HTMLElement {
         }
 
         this.overlayInner.appendChild(suggestionFragment);
+    }
+
+    deselect() {
+
+    }
+
+    select(index) {
+
     }
 
     set value(value) {
